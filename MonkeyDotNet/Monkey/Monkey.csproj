@@ -10,5 +10,8 @@
   <ItemGroup>
     <Folder Include="Token\" />
     <Folder Include="Lexer\" />
+    <Folder Include="Repl\" />
+    <Folder Include="Ast\" />
+    <Folder Include="Parser\" />
   </ItemGroup>
 </Project>
