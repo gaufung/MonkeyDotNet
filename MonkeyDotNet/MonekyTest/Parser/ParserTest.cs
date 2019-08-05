@@ -4,6 +4,7 @@
     using Monkey.Parser;
     using Monkey.Ast;
     using Monkey.Lexer;
+
     [TestFixture]
     public class ParserTest
     {
@@ -40,6 +41,25 @@ let foobar = 838383;
         }
 
 
+        [Test]
+        public void TestReturnStatements()
+        {
+            var input = @"
+return 5;
+return 10;
+return 993322;
+";
+            Lexer lexer = Lexer.Create(input);
+            var parser = new Parser(lexer);
+            Program program = parser.ParseProgram();
+            Assert.AreEqual(3, program.Statements.Count, $"program.Statements does not contain 3 statement, but got={program.Statements.Count}");
+            foreach (var stmt in program.Statements)
+            {
+                var returnStatement = stmt as ReturnStatement;
+                Assert.IsNotNull(returnStatement, "stmt should not be null");
+                Assert.AreEqual("return", returnStatement.TokenLiteral(), $"returnStmt.TokenLiteral not 'return', but got={returnStatement.TokenLiteral()}");
+            }
+        }
        
     }
 }

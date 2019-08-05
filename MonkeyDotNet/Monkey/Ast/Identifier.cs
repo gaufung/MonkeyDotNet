@@ -11,6 +11,12 @@
             
         }
 
+        public Identifier(Token t, string v)
+        {
+            Token = t;
+            Value = v;
+        }
+
         public override string TokenLiteral()
         {
             return Token.Literal;

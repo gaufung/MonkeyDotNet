@@ -13,6 +13,11 @@ namespace Monkey.Ast
             }
         }
 
+        public Program()
+        {
+            _statements = new List<Statement>();
+        }
+
         public override string TokenLiteral()
         {
             return _statements.Count > 0 ? _statements[0].TokenLiteral() : "";
