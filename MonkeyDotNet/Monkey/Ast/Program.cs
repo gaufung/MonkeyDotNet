@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Text;
+
 namespace Monkey.Ast
 {
     public class Program : Node
@@ -21,6 +23,16 @@ namespace Monkey.Ast
         public override string TokenLiteral()
         {
             return _statements.Count > 0 ? _statements[0].TokenLiteral() : "";
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var stmt in this.Statements)
+            {
+                sb.Append(stmt.ToString());
+            }
+            return sb.ToString();
         }
     }
 }

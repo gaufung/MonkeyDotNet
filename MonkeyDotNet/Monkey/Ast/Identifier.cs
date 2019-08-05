@@ -21,5 +21,10 @@
         {
             return Token.Literal;
         }
+
+        public override string ToString()
+        {
+            return this.Value;
+        }
     }
 }

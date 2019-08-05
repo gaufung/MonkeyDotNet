@@ -60,6 +60,25 @@ return 993322;
                 Assert.AreEqual("return", returnStatement.TokenLiteral(), $"returnStmt.TokenLiteral not 'return', but got={returnStatement.TokenLiteral()}");
             }
         }
+
+        [Test]
+        public void TestIdentifierExpression()
+        {
+            var input = @"foobar;";
+
+            Lexer lexer = Lexer.Create(input);
+
+            Parser p = new Parser(lexer);
+            Program program = p.ParseProgram();
+
+            Assert.AreEqual(1, program.Statements.Count, $"program has not enough statements, but got={program.Statements.Count}");
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, "stmt is not ExpressionStatement");
+            var ident = stmt.Expression as Identifier;
+            Assert.IsNotNull(ident, "exp is not Identifier.");
+            Assert.AreEqual("foobar", ident.Value, $"ident.Value is not foobar, but got {ident.Value}");
+            Assert.AreEqual("foobar", ident.TokenLiteral(), $"ident.TokenLiteral is not foobar, but got {ident.TokenLiteral()}");
+        }
        
     }
 }
