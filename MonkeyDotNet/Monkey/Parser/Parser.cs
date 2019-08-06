@@ -3,10 +3,8 @@
     using Lexer;
     using Token;
     using Ast;
-    using System.Collections;
     using System;
     using System.Collections.Generic;
-    using System.Runtime.Versioning;
 
     public class Parser
     {
@@ -26,6 +24,9 @@
             this._prefixParseFn = new Dictionary<TokenType, Func<Expression>>();
             this._infixParseFn = new Dictionary<TokenType, Func<Expression, Expression>>();
             this.RegisterPrefix(TokenType.IDENT, this.ParseIdentifier);
+            this.RegisterPrefix(TokenType.INT, this.ParseIntegerLiteral);
+            this.RegisterPrefix(TokenType.MINUS, this.ParsePrefixExpression);
+            this.RegisterPrefix(TokenType.BANG, this.ParsePrefixExpression);
         }
 
         private void NextToken()
@@ -166,6 +167,39 @@
         {
             return new Identifier(this._curToken, this._curToken.Literal);
         }
+        #endregion
+
+
+        #region parseIntegerLiteral
+        private IntegerLiteral ParseIntegerLiteral()
+        {
+            var smst = new IntegerLiteral();
+            smst.Token = this._curToken;
+            try
+            {
+                var value = long.Parse(this._curToken.Literal);
+                smst.Value = value;
+                return smst;
+            }
+            catch (FormatException)
+            {
+                throw new ParserException($"illegal integer: {this._curToken.Literal}");
+            }
+
+        }
+        #endregion
+
+
+        #region parsePrfixExpression
+        private Expression ParsePrefixExpression()
+        {
+            var exp = new PrefixExpression();
+            exp.Token = this._curToken;
+            exp.Operator = this._curToken.Literal;
+            this.NextToken();
+            exp.Right = this.ParseExpression(Precedence.PREFIX);
+            return exp;
+        } 
         #endregion
 
     }

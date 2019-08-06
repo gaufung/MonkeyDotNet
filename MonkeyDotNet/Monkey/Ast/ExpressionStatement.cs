@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Monkey.Ast
+﻿namespace Monkey.Ast
 {
     using Token;
     public class ExpressionStatement : Statement
