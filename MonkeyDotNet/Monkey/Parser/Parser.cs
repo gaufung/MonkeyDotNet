@@ -16,6 +16,18 @@
         private IDictionary<TokenType, Func<Expression, Expression>> _infixParseFn;
 
 
+        private static readonly IDictionary<TokenType, Precedence> _PRECEDENCES=new Dictionary<TokenType, Precedence>(){
+            {TokenType.EQ, Precedence.EQUALS},
+            {TokenType.NOT_EQ, Precedence.EQUALS},
+            {TokenType.LT, Precedence.LESSGRATER},
+            {TokenType.GT, Precedence.LESSGRATER},
+            {TokenType.PLUS, Precedence.SUM},
+            {TokenType.MINUS, Precedence.SUM},
+            {TokenType.SLASH, Precedence.PRODUCT},
+            {TokenType.ATERISK, Precedence.PRODUCT},
+        };
+
+
         public Parser(Lexer lexer)
         {
             this._lexer = lexer;
@@ -27,6 +39,15 @@
             this.RegisterPrefix(TokenType.INT, this.ParseIntegerLiteral);
             this.RegisterPrefix(TokenType.MINUS, this.ParsePrefixExpression);
             this.RegisterPrefix(TokenType.BANG, this.ParsePrefixExpression);
+            this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.ATERISK, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.EQ, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.NOT_EQ, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.LT, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.GT, this.ParseInfixExpression);
+
         }
 
         private void NextToken()
@@ -64,6 +85,29 @@
             }
         }
 
+        
+        private Expression ParseExpression(Precedence precedence)
+        {
+            if (this._prefixParseFn.ContainsKey(this._curToken.Type))
+            {
+                Func<Expression> prefix = this._prefixParseFn[this._curToken.Type];
+                Expression leftExp =  prefix();
+                while(!this.PeekTokenIs(TokenType.SEMICOLON) && precedence < this.PeekPrecedence())
+                {
+                    if (this._infixParseFn.ContainsKey(this._peekToken.Type))
+                    {
+                        Func<Expression, Expression> infix = this._infixParseFn[this._peekToken.Type];
+                        this.NextToken();
+                        leftExp = infix(leftExp);
+                    }else{
+                        return leftExp;
+                    }
+                }
+                return leftExp;
+            }
+            throw new ParserException($"Unsupport token: {this._curToken.Type}");
+        }
+
         #region token tools
         private bool CurTokenIs(TokenType t)
         {
@@ -94,6 +138,26 @@
         private void RegisterInfix(TokenType t, Func<Expression, Expression> fn)
         {
             this._infixParseFn.Add(t, fn);
+        }
+        #endregion
+
+        #region precedences
+        private Precedence PeekPrecedence()
+        {
+            if(_PRECEDENCES.ContainsKey(this._peekToken.Type)) 
+            {
+                return _PRECEDENCES[this._peekToken.Type];
+            }
+            return Precedence.LOWEST;
+        }
+
+        private Precedence CurPrecedence()
+        {
+            if(_PRECEDENCES.ContainsKey(this._curToken.Type))
+            {
+                return _PRECEDENCES[this._curToken.Type];
+            }
+            return Precedence.LOWEST;
         }
         #endregion
 
@@ -153,21 +217,13 @@
             return smst;
         }
 
-        private Expression ParseExpression(Precedence precedence)
-        {
-            if (this._prefixParseFn.ContainsKey(this._curToken.Type))
-            {
-                Func<Expression> prefix = this._prefixParseFn[this._curToken.Type];
-                return prefix();
-            }
-            throw new ParserException($"Unsupport token: {this._curToken.Type}");
-        }
+
+        #endregion
 
         private Expression ParseIdentifier()
         {
             return new Identifier(this._curToken, this._curToken.Literal);
         }
-        #endregion
 
 
         #region parseIntegerLiteral
@@ -202,5 +258,19 @@
         } 
         #endregion
 
+        #region parseInfixExpression
+        private Expression ParseInfixExpression(Expression left) 
+        {
+            InfixExpression exp = new InfixExpression{
+                Token=this._curToken,
+                Operator = this._curToken.Literal,
+                Left = left,
+            };
+            Precedence prece = this.CurPrecedence();
+            this.NextToken();
+            exp.Right = this.ParseExpression(prece);
+            return exp;
+        }
+        #endregion
     }
 }

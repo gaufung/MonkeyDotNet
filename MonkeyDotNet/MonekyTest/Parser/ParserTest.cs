@@ -125,6 +125,38 @@ return 993322;
             Assert.IsNotNull(inte, "exp is not IntegerLiteral");
             Assert.AreEqual(val, inte.Value, $"integer value is not {val} but got {inte.Value}");
         }
+
+        public void TestParsingInfixExpression()
+        {
+            var infixTests = new[]
+            {
+
+                new {Input="5+5", LeftValue=5, Operator="+", RightValue=5},
+                new {Input="5-5", LeftValue=5, Operator="-", RightValue=5},
+                new {Input="5*5", LeftValue=5, Operator="*", RightValue=5},
+                new {Input="5/5", LeftValue=5, Operator="/", RightValue=5},
+                new {Input="5>5", LeftValue=5, Operator=">", RightValue=5},
+                new {Input="5<5", LeftValue=5, Operator="<", RightValue=5},
+                new {Input="5==5", LeftValue=5, Operator="==", RightValue=5},
+                new {Input="5!=5", LeftValue=5, Operator="!=", RightValue=5},
+            };
+            foreach (var test in infixTests)
+            {
+                var lexer = Lexer.Create(test.Input);
+                var parser = new Parser(lexer);
+                var program = parser.ParseProgram();
+                Assert.AreEqual(1, program.Statements.Count, $"prgoram.Statements does not contain 1 statement(s), but got {program.Statements.Count}");
+
+                var stmt = program.Statements[0] as ExpressionStatement;
+                Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatement");
+                var exp = stmt.Expression as InfixExpression;
+                Assert.IsNotNull(exp, "stmt.Expression is not InfixExpression");
+                TestIntegerLiteral(exp.Left, test.LeftValue);
+                Assert.AreEqual(test.Operator, exp.Operator);
+                TestIntegerLiteral(exp.Right, test.RightValue);
+
+            }
+        }
        
     }
 }
