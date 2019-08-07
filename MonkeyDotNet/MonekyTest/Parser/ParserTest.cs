@@ -1,4 +1,5 @@
-﻿namespace MonkeyTest.Parser
+﻿using System;
+namespace MonkeyTest.Parser
 {
     using NUnit.Framework;
     using Monkey.Parser;
@@ -157,6 +158,78 @@ return 993322;
 
             }
         }
-       
+
+        private void TestIdentifier(Expression exp, string value)
+        {
+            var ident = exp as Identifier;
+            Assert.IsNotNull(ident);
+            Assert.AreEqual(value, ident.Value, $"identifier.Value is not {value}, but got {ident.Value}");
+            Assert.AreEqual(value, ident.TokenLiteral(), $"identifier.TokenLiteral not {value}, but got {ident.TokenLiteral()}");
+        }
+
+        private void TestLiteralExpression(Expression exp, object expected)
+        {
+            string str = expected as String;
+            if(str!=null){
+                TestIdentifier(exp, str);
+                return;
+            }
+            bool outbo;
+            if(bool.TryParse(expected.ToString(), out outbo))
+            {
+                TestBooleanLiteral(exp, outbo);
+                return;
+            }
+            long outlong;
+            if(long.TryParse(expected.ToString(), out outlong))
+            {
+                TestIntegerLiteral(exp, outlong);
+            }
+
+        }
+
+
+        private void TestInfixExpression(Expression exp, object left, string op, object right)
+        {
+            var opExp = exp as InfixExpression;
+            Assert.IsNotNull(opExp, "exp is not InfixExpression");
+            
+            TestLiteralExpression(opExp.Left, left);
+            Assert.AreEqual(op, opExp.Operator, $"exp.Operator is not {opExp.Operator}, but got {op}");
+
+            TestLiteralExpression(opExp.Right, right);
+        }
+
+        private void TestBooleanLiteral(Expression exp, bool value)
+        {
+            var bo = exp as Boolean;
+            Assert.IsNotNull(bo, "exp is not Ast.Boolean");
+            Assert.AreEqual(value, bo.Value, $"bo.Value is not {value}, but got {bo.Value}");
+            Assert.AreEqual(value.ToString(), bo.TokenLiteral(), $"bo.TokenLiteral is not {value.ToString()}, but got {bo.TokenLiteral()}");
+
+        }
+
+        [Test]
+        public void TestOperatorPrecedenceParsiong()
+        {
+            var tests = new[] 
+            {
+                new {Input="true", Expect="true"},
+                new {Input="false", Expect="false"},
+                new {Input="3>5 == false", Expect="((3 > 5) == false)"},
+                new {Input="3<5==true", Expect="((3 < 5) == true)" },
+            };
+
+            foreach (var test in tests)
+            {
+                var lexer = Lexer.Create(test.Input);
+                var parser = new Parser(lexer);
+                var program = parser.ParseProgram();
+                Assert.AreEqual(1, program.Statements.Count, $"program.Statement.Count is not 1, but got {program.Statements.Count}");
+                var exp = program.Statements[0];
+                Assert.AreEqual(test.Expect, exp.ToString(), $"exp.ToString is not {test.Expect}, but got {exp.ToString()}");
+            }
+
+        }
     }
 }

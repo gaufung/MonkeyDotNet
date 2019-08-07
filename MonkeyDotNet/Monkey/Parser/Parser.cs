@@ -39,6 +39,8 @@
             this.RegisterPrefix(TokenType.INT, this.ParseIntegerLiteral);
             this.RegisterPrefix(TokenType.MINUS, this.ParsePrefixExpression);
             this.RegisterPrefix(TokenType.BANG, this.ParsePrefixExpression);
+            this.RegisterPrefix(TokenType.TRUE, this.ParseBoolean);
+            this.RegisterPrefix(TokenType.FALSE, this.ParseBoolean);
             this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
@@ -61,7 +63,7 @@
             var program = new Program();
             while (this._curToken.Type != TokenType.EOF)
             {
-                Statement stmt = this.ParserStatement();
+                Statement stmt = this.ParseStatement();
                 if(stmt!= null)
                 {
                     program.Statements.Add(stmt);
@@ -71,7 +73,7 @@
             return program;
         }
 
-        private Statement ParserStatement()
+        private Statement ParseStatement()
         {
             switch (this._curToken.Type)
             {
@@ -105,7 +107,10 @@
                 }
                 return leftExp;
             }
-            throw new ParserException($"Unsupport token: {this._curToken.Type}");
+            else
+            {
+                throw new ParserException($"Unsupport token: {this._curToken.Type}");
+            }
         }
 
         #region token tools
@@ -170,14 +175,14 @@
             };
             if (!this.ExpectPeek(TokenType.IDENT))
             {
-                return null;
+                throw new ParserException($"Expect IDENT Token but got {this._peekToken.Literal}");
             }
 
             stmt.Name = new Identifier(this._curToken, this._curToken.Literal);
 
             if (!this.ExpectPeek(TokenType.ASSIGN))
             {
-                return null;
+                throw new ParserException($"Expect ASSIGN Token but got {this._peekToken.Literal}");
             }
 
             //todo: skipping the expression util we encounter a semicolon
@@ -245,7 +250,6 @@
         }
         #endregion
 
-
         #region parsePrfixExpression
         private Expression ParsePrefixExpression()
         {
@@ -270,6 +274,13 @@
             this.NextToken();
             exp.Right = this.ParseExpression(prece);
             return exp;
+        }
+        #endregion
+
+        #region parseBoolean
+        private Expression ParseBoolean()
+        {
+            return new Ast.Boolean{Token=this._curToken, Value=this.CurTokenIs(TokenType.TRUE)};
         }
         #endregion
     }
