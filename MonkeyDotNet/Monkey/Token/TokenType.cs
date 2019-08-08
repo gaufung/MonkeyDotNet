@@ -83,7 +83,7 @@ namespace Monkey.Token
         /// <summary>
         /// right parenthess ")"
         /// </summary>
-        RPAEN,
+        RPAREN,
 
         /// <summary>
         /// left brace "{"

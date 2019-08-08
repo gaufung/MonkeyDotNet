@@ -212,12 +212,17 @@ return 993322;
         [Test]
         public void TestOperatorPrecedenceParsiong()
         {
-            var tests = new[] 
+            var tests = new[]
             {
                 new {Input="true", Expect="true"},
                 new {Input="false", Expect="false"},
                 new {Input="3>5 == false", Expect="((3 > 5) == false)"},
                 new {Input="3<5==true", Expect="((3 < 5) == true)" },
+                new {Input="1+(2+3)+4", Expect="((1 + (2 + 3)) + 4)"},
+                new {Input="(5+5)*2", Expect="((5 + 5) * 2)"},
+                new {Input="2 / (5 + 5)",Expect="(2 / (5 + 5))"},
+                new {Input="-(5+5)", Expect="(-(5 + 5))"},
+                new {Input="!(true==true)", Expect="(!(true == true))"}
             };
 
             foreach (var test in tests)
@@ -230,6 +235,34 @@ return 993322;
                 Assert.AreEqual(test.Expect, exp.ToString(), $"exp.ToString is not {test.Expect}, but got {exp.ToString()}");
             }
 
+        }
+
+        [Test]
+        public void TestIfExpression()
+        {
+            var input = "if (x<y) {x}";
+            var lexer = Lexer.Create(input);
+            var parser = new Parser(lexer);
+            var program = parser.ParseProgram();
+            Assert.AreEqual(1, program.Statements.Count);
+
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatement");
+
+            var exp = stmt.Expression as IfExpression;
+            Assert.IsNotNull(exp, "stmt.Expression is not IfExpression.");
+
+            TestInfixExpression(exp.Condition, "x", "<", "y");
+
+            Assert.AreEqual(1, exp.Consequence.Statements.Count, 
+                $"consequence is not 1 statement, but got {exp.Consequence.Statements.Count}");
+
+            var consequecne = exp.Consequence.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(consequecne, "Statement[0] is not ExpressionStatement");
+
+            TestIdentifier(consequecne.Expression, "x");
+
+            Assert.IsNull(exp.Alternative, "exp.Alternative is not null");
         }
     }
 }

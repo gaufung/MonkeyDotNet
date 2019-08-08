@@ -41,6 +41,8 @@
             this.RegisterPrefix(TokenType.BANG, this.ParsePrefixExpression);
             this.RegisterPrefix(TokenType.TRUE, this.ParseBoolean);
             this.RegisterPrefix(TokenType.FALSE, this.ParseBoolean);
+            this.RegisterPrefix(TokenType.LPAREN, this.ParseGroupedExpression);
+            this.RegisterPrefix(TokenType.IF, this.ParseIfExpression);
             this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
@@ -281,6 +283,73 @@
         private Expression ParseBoolean()
         {
             return new Ast.Boolean{Token=this._curToken, Value=this.CurTokenIs(TokenType.TRUE)};
+        }
+        #endregion
+
+        #region parseGroupedExpression
+        private Expression ParseGroupedExpression()
+        {
+            this.NextToken();
+            var exp = this.ParseExpression(Precedence.LOWEST);
+            if (!this.ExpectPeek(TokenType.RPAREN))
+            {
+                throw new ParserException($"Expect peek {TokenType.RPAREN}, but got {this._peekToken}");
+            }
+            return exp;
+        }
+        #endregion
+
+
+        #region parseIfExpression
+        private Expression ParseIfExpression()
+        {
+            var expression = new IfExpression();
+            expression.Token = this._curToken;
+            if (!this.ExpectPeek(TokenType.LPAREN))
+            {
+                throw new ParserException($"Expect peek a {TokenType.LPAREN} but got {this._peekToken}");
+            }
+            this.NextToken();
+            expression.Condition = this.ParseExpression(Precedence.LOWEST);
+
+            if (!this.ExpectPeek(TokenType.RPAREN))
+            {
+                throw new ParserException($"Expect peek a {TokenType.RPAREN}, but got {this._peekToken}");
+            }
+            if (!this.ExpectPeek(TokenType.LBRACE))
+            {
+                throw new ParserException($"Expect peek a {TokenType.LBRACE}, but got {this._peekToken}");
+            }
+            expression.Consequence = this.ParseBlockStatement();
+
+            if (this.PeekTokenIs(TokenType.ELSE))
+            {
+                this.NextToken();
+                if (!this.ExpectPeek(TokenType.LBRACE))
+                {
+                    throw new ParserException($"Expect peek a {TokenType.LBRACE}, but got {this._peekToken}");
+                }
+                expression.Alternative = this.ParseBlockStatement();
+            }
+            return expression;
+        }
+
+
+        #endregion
+
+        #region parse block statemnt
+        private BlockStatement ParseBlockStatement()
+        {
+            var block = new BlockStatement();
+            block.Statements = new List<Statement>();
+            this.NextToken();
+            while (!this.CurTokenIs(TokenType.RBRACE))
+            {
+                var stmt = this.ParseStatement();
+                block.Statements.Add(stmt);
+                this.NextToken();
+            }
+            return block;
         }
         #endregion
     }

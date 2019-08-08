@@ -52,7 +52,7 @@
                     token = NewToken(TokenType.LPAREN, this.character);
                     break;
                 case ')':
-                    token = NewToken(TokenType.RPAEN, this.character);
+                    token = NewToken(TokenType.RPAREN, this.character);
                     break;
                 case ',':
                     token = NewToken(TokenType.COMMA, this.character);
