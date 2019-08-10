@@ -19,5 +19,6 @@
     <Folder Include="Lexer\" />
     <Folder Include="Token\" />
     <Folder Include="Parser\" />
+    <Folder Include="Evaluator\" />
   </ItemGroup>
 </Project>

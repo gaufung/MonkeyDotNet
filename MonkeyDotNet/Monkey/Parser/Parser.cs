@@ -25,6 +25,7 @@
             {TokenType.MINUS, Precedence.SUM},
             {TokenType.SLASH, Precedence.PRODUCT},
             {TokenType.ATERISK, Precedence.PRODUCT},
+            {TokenType.LPAREN, Precedence.CALL},
         };
 
 
@@ -43,6 +44,7 @@
             this.RegisterPrefix(TokenType.FALSE, this.ParseBoolean);
             this.RegisterPrefix(TokenType.LPAREN, this.ParseGroupedExpression);
             this.RegisterPrefix(TokenType.IF, this.ParseIfExpression);
+            this.RegisterPrefix(TokenType.FUNCTION, this.ParseFunctionLiteral);
             this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
@@ -51,6 +53,7 @@
             this.RegisterInfix(TokenType.NOT_EQ, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.LT, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.GT, this.ParseInfixExpression);
+            this.RegisterInfix(TokenType.LPAREN, this.ParseCallExpression);
 
         }
 
@@ -187,8 +190,11 @@
                 throw new ParserException($"Expect ASSIGN Token but got {this._peekToken.Literal}");
             }
 
-            //todo: skipping the expression util we encounter a semicolon
-            while (!this.CurTokenIs(TokenType.SEMICOLON))
+            this.NextToken();
+
+            stmt.Value = this.ParseExpression(Precedence.LOWEST);
+
+            if(this.PeekTokenIs(TokenType.SEMICOLON)) 
             {
                 this.NextToken();
             }
@@ -202,8 +208,10 @@
         {
             var stmt = new ReturnStatement(this._curToken);
             this.NextToken();
+
+            stmt.ReturnValue = this.ParseExpression(Precedence.LOWEST);
             //todo: skip the expression until we encounter a semicolon
-            while (!this.CurTokenIs(TokenType.SEMICOLON))
+            if (this.PeekTokenIs(TokenType.SEMICOLON))
             {
                 this.NextToken();
             }
@@ -351,6 +359,87 @@
             }
             return block;
         }
+        #endregion
+
+        #region parse funticon literal
+        private Expression ParseFunctionLiteral() 
+        {
+            var lit = new FunctionLiteral();
+            lit.Token = this._curToken;
+            if(!this.ExpectPeek(TokenType.LPAREN))
+            {
+                throw new ParserException($"expect peek {TokenType.LPAREN} but got {this._peekToken}");
+            }
+            lit.Parameters = this.ParseFunctionParameters();
+
+            if(!this.ExpectPeek(TokenType.LBRACE))
+            {
+                throw new ParserException($"expect peek {TokenType.LBRACE} but got {this._peekToken}");
+            }
+            lit.Body = this.ParseBlockStatement();
+            return lit;
+        }
+
+        private IList<Identifier> ParseFunctionParameters()
+        {
+            var identifiers = new List<Identifier>();
+            if(this.PeekTokenIs(TokenType.RPAREN))
+            {
+                this.NextToken();
+                return identifiers;
+            }
+            this.NextToken();
+            var ident = new Identifier(this._curToken, this._curToken.Literal);
+
+            identifiers.Add(ident);
+            while (this.PeekTokenIs(TokenType.COMMA))
+            {
+                this.NextToken();
+                this.NextToken();
+                ident = new Identifier(this._curToken, this._curToken.Literal);
+                identifiers.Add(ident);
+            }
+            if(!this.ExpectPeek(TokenType.RPAREN))
+            {
+                throw new ParserException($"expect peek token is {TokenType.RPAREN}, but got {this._peekToken}");
+            }
+            return identifiers;
+        }
+        #endregion
+
+        #region parse call expression
+        private Expression ParseCallExpression(Expression function) 
+        {
+            var exp = new CallExpression();
+            exp.Token = this._curToken;
+            exp.Function = function;
+            exp.Arguments = this.ParseCallArguments();
+            return exp;
+        }  
+        private IList<Expression> ParseCallArguments() 
+        {
+            var args = new List<Expression>();
+            if(this.PeekTokenIs(TokenType.RPAREN)) 
+            {
+                this.NextToken();
+                return args;
+            }
+
+            this.NextToken();
+            args.Add(this.ParseExpression(Precedence.LOWEST));
+
+            while(this.PeekTokenIs(TokenType.COMMA)) 
+            {
+                this.NextToken();
+                this.NextToken();
+                args.Add(this.ParseExpression(Precedence.LOWEST));
+            }
+            if(!this.ExpectPeek(TokenType.RPAREN))
+            {
+                throw new ParserException($"expect peek {TokenType.RPAREN} but got {this._peekToken}");
+            }
+            return args;
+        } 
         #endregion
     }
 }

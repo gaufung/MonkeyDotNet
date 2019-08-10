@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 namespace MonkeyTest.Parser
 {
     using NUnit.Framework;
@@ -9,27 +10,55 @@ namespace MonkeyTest.Parser
     [TestFixture]
     public class ParserTest
     {
+
+        class LetTestCase 
+        {
+            public string Input { get; set; }
+            public string ExpectedIdentifer { get; set; }
+
+            public object ExpectedValue { get; set; }
+        }
+
         [Test]
         public void TestLetStatements()
         {
-            var input = @"
-let x = 5;
-let y = 10;
-let foobar = 838383;
-";
-            Lexer lexer = Lexer.Create(input);
-            var parser = new Parser(lexer);
-            Program program = parser.ParseProgram();
-            Assert.IsNotNull(program, "program is null");
-            Assert.AreEqual(3, program.Statements.Count, $"program statement count is not 3, but got {program.Statements.Count}");
-
-            var test = new[] { "x", "y", "foobar" };
-            for(int i =0; i <test.Length; i++)
+            var tests = new []
             {
-                var smst = program.Statements[i];
-                TestLetStatement(smst, test[i]);
+                new LetTestCase{Input="let x = 5;", ExpectedIdentifer="x", ExpectedValue=5},
+                new LetTestCase{Input="let y = true;", ExpectedIdentifer="y", ExpectedValue = true},
+                new LetTestCase{Input="let foobar=y", ExpectedIdentifer="foobar", ExpectedValue="y"},
+            };
+            foreach (var tt in tests)
+            {
+                var lexer = Lexer.Create(tt.Input);
+                var parser = new Parser(lexer);
+                var program = parser.ParseProgram();
+                Assert.AreEqual(1, program.Statements.Count, $"program.Statements.Count is not 1, but got {program.Statements.Count}");
 
+                var stmt = program.Statements[0];
+                TestLetStatement(stmt, tt.ExpectedIdentifer);
+                var val = (stmt as LetStatement).Value;
+                TestLiteralExpression(val, tt.ExpectedValue);
             }
+
+//             var input = @"
+// let x = 5;
+// let y = 10;
+// let foobar = 838383;
+// ";
+//             Lexer lexer = Lexer.Create(input);
+//             var parser = new Parser(lexer);
+//             Program program = parser.ParseProgram();
+//             Assert.IsNotNull(program, "program is null");
+//             Assert.AreEqual(3, program.Statements.Count, $"program statement count is not 3, but got {program.Statements.Count}");
+
+//             var test = new[] { "x", "y", "foobar" };
+//             for(int i =0; i <test.Length; i++)
+//             {
+//                 var smst = program.Statements[i];
+//                 TestLetStatement(smst, test[i]);
+
+//             }
         }
 
         private void TestLetStatement(Statement smst, string name)
@@ -169,23 +198,16 @@ return 993322;
 
         private void TestLiteralExpression(Expression exp, object expected)
         {
-            string str = expected as String;
-            if(str!=null){
-                TestIdentifier(exp, str);
-                return;
-            }
-            bool outbo;
-            if(bool.TryParse(expected.ToString(), out outbo))
+            if(expected.GetType()==typeof(string))
             {
-                TestBooleanLiteral(exp, outbo);
-                return;
-            }
-            long outlong;
-            if(long.TryParse(expected.ToString(), out outlong))
+                TestIdentifier(exp, (expected as string));
+            }else if (expected.GetType()==typeof(bool)) 
             {
-                TestIntegerLiteral(exp, outlong);
+                TestBooleanLiteral(exp, (bool)expected);
+            }else if (expected.GetType()==typeof(long))
+            {
+                TestIntegerLiteral(exp, (long)expected);
             }
-
         }
 
 
@@ -205,8 +227,6 @@ return 993322;
             var bo = exp as Boolean;
             Assert.IsNotNull(bo, "exp is not Ast.Boolean");
             Assert.AreEqual(value, bo.Value, $"bo.Value is not {value}, but got {bo.Value}");
-            Assert.AreEqual(value.ToString(), bo.TokenLiteral(), $"bo.TokenLiteral is not {value.ToString()}, but got {bo.TokenLiteral()}");
-
         }
 
         [Test]
@@ -222,7 +242,10 @@ return 993322;
                 new {Input="(5+5)*2", Expect="((5 + 5) * 2)"},
                 new {Input="2 / (5 + 5)",Expect="(2 / (5 + 5))"},
                 new {Input="-(5+5)", Expect="(-(5 + 5))"},
-                new {Input="!(true==true)", Expect="(!(true == true))"}
+                new {Input="!(true==true)", Expect="(!(true == true))"},
+                new {Input="a + add(b*c) + d", Expect="((a + add((b * c))) + d)"},
+                new {Input="add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", Expect="add(a,b,1,(2 * 3),(4 + 5),add(6,(7 * 8)))"},
+                new {Input="add(a + b + c * d / f + g)", Expect="add((((a + b) + ((c * d) / f)) + g))"},
             };
 
             foreach (var test in tests)
@@ -263,6 +286,82 @@ return 993322;
             TestIdentifier(consequecne.Expression, "x");
 
             Assert.IsNull(exp.Alternative, "exp.Alternative is not null");
+        }
+
+        [Test]
+        public void TestFunctionLiteralParsing()
+        {
+            var input = "fn(x, y) { x + y; }";
+            var lexer = Lexer.Create(input);
+            var parse = new Parser(lexer);
+            var program = parse.ParseProgram();
+            Assert.AreEqual(1, program.Statements.Count);
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, $"program.Statement[0] is not ExpressionStatement");
+            var function = stmt.Expression as FunctionLiteral;
+            Assert.IsNotNull(function, "stmt.Expression is not FunctionLiteral");
+            Assert.AreEqual(2, function.Parameters.Count, $"function.Parameters count is not 2, but got {function.Parameters.Count}");
+
+            TestLiteralExpression(function.Parameters[0], "x");
+            TestLiteralExpression(function.Parameters[1], "y");
+            Assert.AreEqual(1, function.Body.Statements.Count, $"function.Body.Statements.Count is not 2, but got {function.Body.Statements.Count}");
+            var bodyStmt = function.Body.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(bodyStmt, "function.Body.Statement[0] is not ExpressionStatement");
+
+            TestInfixExpression(bodyStmt.Expression, "x", "+", "y");
+        }
+
+        [Test]
+        public void TestFunctionParameterParsing()
+        {
+            var tests = new []
+            {
+                new {Input = "fn(){}", ExpectParamer= new List<string>()},
+                new {Input = "fn(x){}", ExpectParamer=new List<string>{"x"}},
+                new {Input = "fn(x, y, z){}", ExpectParamer=new List<string>{"x", "y", "z"}},
+            };
+            foreach (var test in tests)
+            {
+                var lexer = Lexer.Create(test.Input);
+                var parser = new Parser(lexer);
+                var program = parser.ParseProgram();
+                var stmt = program.Statements[0] as ExpressionStatement;
+                var function = stmt.Expression as FunctionLiteral;
+
+                Assert.AreEqual(test.ExpectParamer.Count, function.Parameters.Count,
+                $"length parameter wrong. want {test.ExpectParamer.Count}, but got {function.Parameters.Count}");
+                for (int i = 0; i < test.ExpectParamer.Count; i++)
+                {
+                    TestLiteralExpression(function.Parameters[i], test.ExpectParamer[i]);
+                }
+            }
+        }
+
+        [Test]
+        public void TestCallExpression() 
+        {
+            var input = "add(1, 2 * 3, 4 + 5);";
+            var lexer = Lexer.Create(input);
+            var parser = new Parser(lexer);
+            var program = parser.ParseProgram();
+
+            Assert.AreEqual(1, program.Statements.Count, $"program.Statements.Count is not 1, but got {program.Statements.Count}");
+
+            var stmt = program.Statements[0] as ExpressionStatement;
+
+            Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatment");
+
+            var exp = stmt.Expression as CallExpression;
+
+            Assert.IsNotNull(exp, "stmt.Expression is not CallExpression");
+
+            TestIdentifier(exp.Function, "add");
+
+            Assert.AreEqual(3, exp.Arguments.Count, $"exp.Arguments.Count is 3, but got {exp.Arguments.Count}");
+
+            TestLiteralExpression(exp.Arguments[0], 1);
+            TestInfixExpression(exp.Arguments[1], 2, "*", 3);
+            TestInfixExpression(exp.Arguments[2], 4, "+", 5);
         }
     }
 }

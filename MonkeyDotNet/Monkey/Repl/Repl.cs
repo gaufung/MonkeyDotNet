@@ -1,8 +1,11 @@
 ﻿using System.IO;
+using System;
 namespace Monkey.Repl
 {
     using Lexer;
-    using Token;
+    using Parser;
+    using Evaluator;
+    using Object;
     public class Repl
     {
         private readonly static string _PROMPT = ">> ";
@@ -15,10 +18,22 @@ namespace Monkey.Repl
                 if (string.IsNullOrWhiteSpace(input)){
                     return;
                 }
-                var lexer = Lexer.Create(input);
-                for(Token token = lexer.NextToken(); token.Type != TokenType.EOF; token = lexer.NextToken())
+                try
                 {
-                    writer.WriteLine($"Token Type:{token.Type}, Token Literal:{token.Literal}");
+                    var lexer = Lexer.Create(input);
+                    var parser = new Parser(lexer);
+                    var program = parser.ParseProgram();
+                    Object evaluated = Evaluator.Eval(program);
+                    if(evaluated !=null)
+                    {
+                        writer.Write(evaluated.Inspect());
+                        writer.Write(Environment.NewLine);
+                    }
+                }
+                catch (ParserException e)
+                {
+                    writer.Write(e.Message);
+                    writer.Write(Environment.NewLine);
                 }
             }
         }
