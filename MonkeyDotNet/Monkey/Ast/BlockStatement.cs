@@ -26,7 +26,9 @@ namespace Monkey.Ast
             var sb = new StringBuilder();
             foreach (var stmt in this.Statements)
             {
-                sb.Append(sb.ToString());
+                var sub = stmt.ToString();
+                var type = stmt.GetType();
+                sb.Append(sub);
             }
             return sb.ToString();
         }
