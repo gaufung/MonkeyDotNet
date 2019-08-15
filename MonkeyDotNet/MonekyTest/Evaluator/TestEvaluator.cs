@@ -221,6 +221,7 @@ namespace MonkeyTest.Evaluator
                 new ErrorTestCase("5; true + false; 5", "unknown operator: BOOLEAN_OBJ + BOOLEAN_OBJ"),
                 new ErrorTestCase("if (10 > 1) { true + false }", "unknown operator: BOOLEAN_OBJ + BOOLEAN_OBJ"),
                 new ErrorTestCase("foobar", "identifier not found: foobar"),
+                new ErrorTestCase("\"Hello\" - \"World\"", "unknown operator: STRING_OBJ - STRING_OBJ" ),
             };
             foreach (var tt in tests)
             {
@@ -330,6 +331,33 @@ namespace MonkeyTest.Evaluator
             addTwo(2);
             ";
             TestIntegerObject(TestEval(input), 4);
+        }
+        #endregion
+
+
+        #region test string literal
+
+        [Test]
+        public void TestStringLiteral()
+        {
+            var input = "\"Hello World!\"";
+            var evaluted = TestEval(input);
+            var str = evaluted as Strings;
+            Assert.IsNotNull(str, "evaluted is not Strings type");
+            Assert.AreEqual("Hello World!", str.Value, $"str.Value is not {"Hello World!"}, but got {str.Value}");
+        }
+
+        #endregion
+
+        #region Test string concatenation
+        [Test]
+        public void TestStringConcatenation()
+        {
+            var input = "\"Hello\" + \" \" + \"World!\"";
+            var evaluated = TestEval(input);
+            var str = evaluated as Strings;
+            Assert.IsNotNull(str, "evaluted is not string type");
+            Assert.AreEqual("Hello World!", str.Value, $"str.Value is not {"Hello World"}, but got {str.Value}");
         }
         #endregion
     }

@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Monkey.Ast;
+using Monkey.Object;
+using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
+
 namespace Monkey.Evaluator
 {
     public class Evaluator
@@ -100,6 +104,10 @@ namespace Monkey.Evaluator
                     return args.First();
                 }
                 return ApplyFunction(function, args);
+            }
+            if (node is StringLiteral)
+            {
+                return new Object.Strings { Value = ((StringLiteral)node).Value };
             }
             return null;
         }
@@ -208,6 +216,10 @@ namespace Monkey.Evaluator
             {
                 return EvaIntegerInfixExpression(op, left, right);
             }
+            if(left.Type()==Object.ObjectType.STRING_OBJ && right.Type()==Object.ObjectType.STRING_OBJ)
+            {
+                return EvalStringInfixExpression(op, left, right);
+            }
             switch(op)
             {
                 case "==":
@@ -244,6 +256,18 @@ namespace Monkey.Evaluator
                 default:
                     return new Object.Error{Message=$"unknown operator: {left.Type()} {op} {right.Type()}"};;
             }
+        }
+
+
+        private static Object.Object EvalStringInfixExpression(string op, Object.Object left, Object.Object right)
+        {
+            if(op!="+")
+            {
+                return new Error { Message = $"unknown operator: {left.Type()} {op} {right.Type()}" };
+            }
+            var leftVal = ((Object.Strings)left).Value;
+            var rightVal = ((Object.Strings)right).Value;
+            return new Object.Strings { Value = leftVal + rightVal };
         }
 
         private static Object.Object EvalIfExpression(Ast.IfExpression exp, Object.Environment env) 

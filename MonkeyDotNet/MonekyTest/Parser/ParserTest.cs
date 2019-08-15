@@ -363,5 +363,21 @@ return 993322;
             TestInfixExpression(exp.Arguments[1], 2, "*", 3);
             TestInfixExpression(exp.Arguments[2], 4, "+", 5);
         }
+
+
+        [Test]
+        public void TestStringLiteralExpression()
+        {
+            var input = "\"hello world\"";
+            var lexer = Lexer.Create(input);
+            var parser = new Parser(lexer);
+            var program = parser.ParseProgram();
+
+            var stmt = program.Statements[0] as ExpressionStatement;
+            var literal = stmt.Expression as StringLiteral;
+            Assert.IsNotNull(literal, "stmt.Expression is not StringLiteral");
+
+            Assert.AreEqual("hello world", literal.Value);
+        }
     }
 }

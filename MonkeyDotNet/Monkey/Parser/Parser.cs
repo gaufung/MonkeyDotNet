@@ -45,6 +45,7 @@
             this.RegisterPrefix(TokenType.LPAREN, this.ParseGroupedExpression);
             this.RegisterPrefix(TokenType.IF, this.ParseIfExpression);
             this.RegisterPrefix(TokenType.FUNCTION, this.ParseFunctionLiteral);
+            this.RegisterPrefix(TokenType.STRING, this.ParseStringLiteral);
             this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
@@ -439,7 +440,14 @@
                 throw new ParserException($"expect peek {TokenType.RPAREN} but got {this._peekToken}");
             }
             return args;
-        } 
+        }
+        #endregion
+
+        #region parse string
+        private Expression ParseStringLiteral()
+        {
+            return new StringLiteral { Token = this._curToken, Value = this._curToken.Literal };
+        }
         #endregion
     }
 }

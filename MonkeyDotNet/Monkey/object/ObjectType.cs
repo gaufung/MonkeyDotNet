@@ -10,7 +10,7 @@ namespace Monkey.Object
         RETURN_VALUE_OBJ,
         ERROR_OBJ,
         FUNCTION_OBJ,
-
+        STRING_OBJ,
     }
     
 }
