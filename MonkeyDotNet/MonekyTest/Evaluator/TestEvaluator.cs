@@ -6,6 +6,7 @@ namespace MonkeyTest.Evaluator
     using Monkey.Lexer;
     using Monkey.Object;
     using Monkey.Parser;
+    using System.Globalization;
 
     [TestFixture]
     public class TestEvaluator
@@ -358,6 +359,41 @@ namespace MonkeyTest.Evaluator
             var str = evaluated as Strings;
             Assert.IsNotNull(str, "evaluted is not string type");
             Assert.AreEqual("Hello World!", str.Value, $"str.Value is not {"Hello World"}, but got {str.Value}");
+        }
+        #endregion
+
+        #region test built function
+
+        class BuiltinFunctionTestCase
+        {
+            public string Input { get; set; }
+            public object Expected { get; set; }
+        }
+        public void TestBuiltinFunction()
+        {
+            var tests = new[]
+            {
+                new BuiltinFunctionTestCase{Input=$"len({""})", Expected=0L},
+                 new BuiltinFunctionTestCase{Input=$"len({"four"})", Expected=4L},
+                  new BuiltinFunctionTestCase{Input=$"len({"hello world"})", Expected=11L},
+                   new BuiltinFunctionTestCase{Input=$"len(1)", Expected="arguments to len not supported, got INTEGER"},
+                   new BuiltinFunctionTestCase{Input=$"len({"one"}, {"two"})", Expected="wrong number of arguments, got=2 want=1"},
+
+            };
+            foreach (var tt in tests)
+            {
+                var evaluated = TestEval(tt.Input);
+                if(tt.Expected.GetType()==typeof(long))
+                {
+                    TestIntegerObject(evaluated, (long)tt.Expected);
+                }
+                if(tt.Expected.GetType()==typeof(string))
+                {
+                    var error = evaluated as Error;
+                    Assert.IsNotNull(error, "evaluated is not Error");
+                    Assert.AreEqual((string)tt.Expected, error.Message, $"Error message error, want {tt.Expected} got {error.Message}");
+                }
+            }
         }
         #endregion
     }

@@ -11,6 +11,7 @@ namespace Monkey.Object
         ERROR_OBJ,
         FUNCTION_OBJ,
         STRING_OBJ,
+        BUILTIN_OBJ,
     }
     
 }
