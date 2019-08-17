@@ -369,21 +369,22 @@ namespace MonkeyTest.Evaluator
             public string Input { get; set; }
             public object Expected { get; set; }
         }
+        [Test]
         public void TestBuiltinFunction()
         {
             var tests = new[]
             {
-                new BuiltinFunctionTestCase{Input=$"len({""})", Expected=0L},
-                 new BuiltinFunctionTestCase{Input=$"len({"four"})", Expected=4L},
-                  new BuiltinFunctionTestCase{Input=$"len({"hello world"})", Expected=11L},
-                   new BuiltinFunctionTestCase{Input=$"len(1)", Expected="arguments to len not supported, got INTEGER"},
-                   new BuiltinFunctionTestCase{Input=$"len({"one"}, {"two"})", Expected="wrong number of arguments, got=2 want=1"},
+                new BuiltinFunctionTestCase{Input="len(\"\")", Expected=0L},
+                //  new BuiltinFunctionTestCase{Input=$"len({"four"})", Expected=4L},
+                //   new BuiltinFunctionTestCase{Input=$"len({"hello world"})", Expected=11L},
+                //    new BuiltinFunctionTestCase{Input=$"len(1)", Expected="arguments to len not supported, got INTEGER"},
+                //    new BuiltinFunctionTestCase{Input=$"len({"one"}, {"two"})", Expected="wrong number of arguments, got=2 want=1"},
 
             };
             foreach (var tt in tests)
             {
                 var evaluated = TestEval(tt.Input);
-                if(tt.Expected.GetType()==typeof(long))
+                if(tt.Expected.GetType() == typeof(long))
                 {
                     TestIntegerObject(evaluated, (long)tt.Expected);
                 }

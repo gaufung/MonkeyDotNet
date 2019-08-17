@@ -14,6 +14,19 @@ namespace Monkey.Evaluator
 
         public readonly static Object.Null NULL = new Object.Null();
 
+        private readonly static IDictionary<string, Object.Builtin> builtins = new Dictionary<string, Object.Builtin>(){
+            {"len", new Object.Builtin(){Fn=(args)=>{
+                if(args.Length != 1) {
+                    return new Error{Message=$"wrong number of the arguments. want 1, got {args.Length}"};
+                }
+                if(args[0].GetType() == typeof(Object.Strings))
+                {
+                    var arg = args[0] as Object.Strings;
+                    return new Object.Integer{Value=(long)(arg.Value.Length)};
+                }
+                return new Error{Message=$"argument to len not supported got {args[0].GetType()}"};
+            }}}
+        };
 
         public static Object.Object Eval(Ast.Node node, Object.Environment env)
         {
@@ -322,6 +335,10 @@ namespace Monkey.Evaluator
             {
                 return env.Get(node.Value);
             }
+            if(builtins.ContainsKey(node.Value)) 
+            {
+                return builtins[node.Value];
+            }
             return new Object.Error{Message=$"identifier not found: {node.Value}"};
         }
 
@@ -342,14 +359,18 @@ namespace Monkey.Evaluator
 
         private static Object.Object ApplyFunction(Object.Object fn, IEnumerable<Object.Object> args) 
         {
-            Object.Function function = fn as Object.Function;
-            if(function==null)
+            if(fn.GetType()==typeof(Object.Function))
             {
-                return new Object.Error(){Message=$"not a funciton. {fn.Type()}"};
+                Object.Function function = fn as Object.Function;
+                var extendedEnv = ExtendFuncitonEnv(function, args);
+                var evaluated = Eval(function.Body, extendedEnv);
+                return unwrapReturnValue(evaluated);
             }
-            var extendedEnv = ExtendFuncitonEnv(function, args);
-            var evaluated = Eval(function.Body, extendedEnv);
-            return unwrapReturnValue(evaluated);
+            if(fn.GetType()==typeof(Object.Builtin))
+            {
+                return ((Object.Builtin)fn).Fn(args.ToArray());
+            }
+            return new Object.Error(){Message=$"not a funciton. {fn.Type()}"};
 
         }
 
