@@ -375,10 +375,10 @@ namespace MonkeyTest.Evaluator
             var tests = new[]
             {
                 new BuiltinFunctionTestCase{Input="len(\"\")", Expected=0L},
-                //  new BuiltinFunctionTestCase{Input=$"len({"four"})", Expected=4L},
-                //   new BuiltinFunctionTestCase{Input=$"len({"hello world"})", Expected=11L},
-                //    new BuiltinFunctionTestCase{Input=$"len(1)", Expected="arguments to len not supported, got INTEGER"},
-                //    new BuiltinFunctionTestCase{Input=$"len({"one"}, {"two"})", Expected="wrong number of arguments, got=2 want=1"},
+               new BuiltinFunctionTestCase{Input=$"len(\"four\")", Expected=4L},
+                new BuiltinFunctionTestCase{Input=$"len(\"hello world\")", Expected=11L},
+                new BuiltinFunctionTestCase{Input=$"len(1)", Expected="argument to len not supported got Monkey.Object.Integer"},
+                new BuiltinFunctionTestCase{Input=$"len(\"one\", \"two\")", Expected="wrong number of the arguments. want 1, got 2"},
 
             };
             foreach (var tt in tests)

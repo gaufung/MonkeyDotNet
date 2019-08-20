@@ -142,11 +142,11 @@
             while (true)
             {
                 this.ReadChar();
-                if (this.PeekChar()== '"'){
+                if (this.character == '"'){
                     break;
                 }
             }
-            this.ReadChar();
+            //this.ReadChar();
             return this.input.Substring(pos, this.position - pos);
         }
 

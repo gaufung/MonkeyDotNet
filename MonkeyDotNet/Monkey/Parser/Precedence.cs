@@ -13,5 +13,6 @@ namespace Monkey.Parser
         PRODUCT = 4,
         PREFIX = 5,
         CALL = 6,
+        INDEX = 7,
     }
 }

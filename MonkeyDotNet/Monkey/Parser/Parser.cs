@@ -5,6 +5,8 @@
     using Ast;
     using System;
     using System.Collections.Generic;
+    using System.Collections;
+    using System.Globalization;
 
     public class Parser
     {
@@ -26,6 +28,7 @@
             {TokenType.SLASH, Precedence.PRODUCT},
             {TokenType.ATERISK, Precedence.PRODUCT},
             {TokenType.LPAREN, Precedence.CALL},
+            {TokenType.LBRACKET, Precedence.INDEX },
         };
 
 
@@ -46,6 +49,7 @@
             this.RegisterPrefix(TokenType.IF, this.ParseIfExpression);
             this.RegisterPrefix(TokenType.FUNCTION, this.ParseFunctionLiteral);
             this.RegisterPrefix(TokenType.STRING, this.ParseStringLiteral);
+            this.RegisterPrefix(TokenType.LBRACKET, this.ParseArrayLiteral);
             this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
@@ -55,6 +59,7 @@
             this.RegisterInfix(TokenType.LT, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.GT, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.LPAREN, this.ParseCallExpression);
+            this.RegisterInfix(TokenType.LBRACKET, this.ParseIndexExpression);
 
         }
 
@@ -414,7 +419,7 @@
             var exp = new CallExpression();
             exp.Token = this._curToken;
             exp.Function = function;
-            exp.Arguments = this.ParseCallArguments();
+            exp.Arguments = this.ParseExpressionList(TokenType.RPAREN);
             return exp;
         }  
         private IList<Expression> ParseCallArguments() 
@@ -447,6 +452,58 @@
         private Expression ParseStringLiteral()
         {
             return new StringLiteral { Token = this._curToken, Value = this._curToken.Literal };
+        }
+        #endregion
+
+        #region parse array
+
+        private Expression ParseArrayLiteral()
+        {
+            var array = new ArrayLiteral();
+            array.Token = this._curToken;
+            array.Elements = this.ParseExpressionList(TokenType.RBRACKET);
+            return array;
+        }
+
+        private IList<Expression> ParseExpressionList(TokenType end)
+        {
+            var list = new List<Expression>();
+            if(this.PeekTokenIs(end))
+            {
+                this.NextToken();
+                return list;
+            }
+
+            this.NextToken();
+            list.Add(this.ParseExpression(Precedence.LOWEST));
+            while(this.PeekTokenIs(TokenType.COMMA))
+            {
+                this.NextToken();
+                this.NextToken();
+                list.Add(this.ParseExpression(Precedence.LOWEST));
+            }
+            if(!this.ExpectPeek(end))
+            {
+                throw new ParserException($"expect peek {end} but got {this._peekToken}");
+            }
+            return list;
+
+        }
+        #endregion
+
+        #region parse index expression
+        private Expression ParseIndexExpression(Expression left)
+        {
+            var exp = new IndexExpression();
+            exp.Token = this._curToken;
+            exp.Left = left;
+            this.NextToken();
+            exp.Index = this.ParseExpression(Precedence.LOWEST);
+            if(!this.ExpectPeek(TokenType.RBRACKET))
+            {
+                throw new ParserException($"want to {TokenType.RBRACKET} got {this._peekToken}");
+            }
+            return exp;
         }
         #endregion
     }

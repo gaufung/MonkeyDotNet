@@ -40,25 +40,6 @@ namespace MonkeyTest.Parser
                 var val = (stmt as LetStatement).Value;
                 TestLiteralExpression(val, tt.ExpectedValue);
             }
-
-//             var input = @"
-// let x = 5;
-// let y = 10;
-// let foobar = 838383;
-// ";
-//             Lexer lexer = Lexer.Create(input);
-//             var parser = new Parser(lexer);
-//             Program program = parser.ParseProgram();
-//             Assert.IsNotNull(program, "program is null");
-//             Assert.AreEqual(3, program.Statements.Count, $"program statement count is not 3, but got {program.Statements.Count}");
-
-//             var test = new[] { "x", "y", "foobar" };
-//             for(int i =0; i <test.Length; i++)
-//             {
-//                 var smst = program.Statements[i];
-//                 TestLetStatement(smst, test[i]);
-
-//             }
         }
 
         private void TestLetStatement(Statement smst, string name)
@@ -378,6 +359,34 @@ return 993322;
             Assert.IsNotNull(literal, "stmt.Expression is not StringLiteral");
 
             Assert.AreEqual("hello world", literal.Value);
+        }
+
+        [Test]
+        public void TestParsingArrayLiteral()
+        {
+            var input = "[1, 2*2, 3 + 3]";
+            var program = new Parser(Lexer.Create(input)).ParseProgram();
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatement");
+            var array = stmt.Expression as ArrayLiteral;
+            Assert.IsNotNull(array, "stmt.Expression is not ArrayLiteral");
+            Assert.AreEqual(3, array.Elements.Count, $"wrong array elements, want 3, got {array.Elements.Count}");
+            TestIntegerLiteral(array.Elements[0], 1);
+            TestInfixExpression(array.Elements[1], 2, "*", 2);
+            TestInfixExpression(array.Elements[2], 3, "+", 3);
+        }
+
+        [Test]
+        public void TestParsingIndexExpression()
+        {
+            var input = "myArray[1+1]";
+            var program = new Parser(Lexer.Create(input)).ParseProgram();
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatement");
+            var indexExp = stmt.Expression as IndexExpression;
+            Assert.IsNotNull(indexExp, "stmt.Expression is not IndexExpression");
+            TestIdentifier(indexExp.Left, "myArray");
+            TestInfixExpression(indexExp.Index, 1, "+", 1);
         }
     }
 }
