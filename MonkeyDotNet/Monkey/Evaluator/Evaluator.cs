@@ -2,7 +2,6 @@
 using Monkey.Object;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml;
 
 namespace Monkey.Evaluator
 {
@@ -24,7 +23,73 @@ namespace Monkey.Evaluator
                     var arg = args[0] as Object.Strings;
                     return new Object.Integer{Value=(long)(arg.Value.Length)};
                 }
+                if(args[0].GetType() == typeof(Object.Array))
+                {
+                    var arg = args[0] as Object.Array;
+                    return new Object.Integer{Value=(long)(arg.Elements.Count)};
+                }
                 return new Error{Message=$"argument to len not supported got {args[0].GetType()}"};
+            }}},
+            {"first", new Object.Builtin(){Fn=(args)=>{
+                if(args.Length != 1) {
+                    return new Error{Message=$"wrong number of the arguments. want 1, got {args.Length}"};
+                }
+                if(args[0].GetType() == typeof(Object.Array))
+                {
+                    var arg = args[0] as Object.Array;
+                    if(arg.Elements.Count > 0)
+                    {
+                        return arg.Elements[0];
+                    }
+                    else
+                    {
+                        return NULL;
+                    }
+                }
+                return new Error{Message=$"argument to first not supported got {args[0].GetType()}"};
+            }}},
+            {"last", new Object.Builtin(){Fn=(args)=>{
+                if(args.Length != 1) {
+                    return new Error{Message=$"wrong number of the arguments. want 1, got {args.Length}"};
+                }
+                if(args[0].GetType() == typeof(Object.Array))
+                {
+                    var arg = args[0] as Object.Array;
+                    var length = arg.Elements.Count;
+                    if(length > 0)
+                    {
+                        return arg.Elements[length-1];
+                    }
+                    else
+                    {
+                        return NULL;
+                    }
+                }
+                return new Error{Message=$"argument to first not supported got {args[0].GetType()}"};
+            }}},
+            {"rest", new Object.Builtin(){Fn=(args)=>{
+                if(args.Length != 1) {
+                    return new Error{Message=$"wrong number of the arguments. want 1, got {args.Length}"};
+                }
+                if(args[0].GetType() == typeof(Object.Array))
+                {
+                    var arg = args[0] as Object.Array;
+                    var length = arg.Elements.Count;
+                    if(length > 0)
+                    {
+                        var newElements = new List<Object.Object>();
+                        for(int i =1; i < length; i++)
+                        {
+                            newElements.Add(arg.Elements[i]);
+                        }
+                        return new Object.Array{Elements=newElements };
+                    }
+                    else
+                    {
+                        return NULL;
+                    }
+                }
+                return new Error{Message=$"argument to first not supported got {args[0].GetType()}"};
             }}}
         };
 
@@ -121,6 +186,29 @@ namespace Monkey.Evaluator
             if (node is StringLiteral)
             {
                 return new Object.Strings { Value = ((StringLiteral)node).Value };
+            }
+            if(node is ArrayLiteral)
+            {
+                var elements = EvalExpressions(((ArrayLiteral)node).Elements, env);
+                if(elements.Count==1 && IsError(elements[0]))
+                {
+                    return elements.First();
+                }
+                return new Object.Array { Elements = elements };
+            }
+            if(node is IndexExpression)
+            {
+                Object.Object left = Eval(((IndexExpression)node).Left, env);
+                if(IsError(left))
+                {
+                    return left;
+                }
+                Object.Object index = Eval(((IndexExpression)node).Index, env);
+                if(IsError(index))
+                {
+                    return index;
+                }
+                return EvalIndexExpression(left, index);
             }
             return null;
         }
@@ -342,7 +430,7 @@ namespace Monkey.Evaluator
             return new Object.Error{Message=$"identifier not found: {node.Value}"};
         }
 
-        private static IEnumerable<Object.Object> EvalExpressions(IEnumerable<Ast.Expression> exps, Object.Environment env)
+        private static IList<Object.Object> EvalExpressions(IEnumerable<Ast.Expression> exps, Object.Environment env)
         {
             var result = new List<Object.Object>();
             foreach (var e in exps)
@@ -393,6 +481,27 @@ namespace Monkey.Evaluator
                 return ((Object.ReturnValue)obj).Value;
             }
             return obj;
+        }
+
+        private static Object.Object EvalIndexExpression(Object.Object left, Object.Object index)
+        {
+            if(left.Type() == ObjectType.ARRAY_OBJ && index.Type() == ObjectType.INTEGER_OBJ)
+            {
+                return EvalArrayIndexExpression(left, index);
+            }
+            return new Error() { Message = $"index operator not support: {left.Type()}" };
+        }
+
+        private static Object.Object EvalArrayIndexExpression(Object.Object array, Object.Object index)
+        {
+            var arrayObject = array as Object.Array;
+            var idx = (index as Integer).Value;
+            var max = arrayObject.Elements.Count;
+            if(idx < 0 || idx >= max)
+            {
+                return NULL;
+            }
+            return arrayObject.Elements[(int)idx];
         }
     }
 }

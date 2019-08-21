@@ -6,6 +6,8 @@ namespace MonkeyTest.Parser
     using Monkey.Parser;
     using Monkey.Ast;
     using Monkey.Lexer;
+    using System.ComponentModel.DataAnnotations;
+    using Microsoft.Extensions.DependencyModel;
 
     [TestFixture]
     public class ParserTest
@@ -387,6 +389,43 @@ return 993322;
             Assert.IsNotNull(indexExp, "stmt.Expression is not IndexExpression");
             TestIdentifier(indexExp.Left, "myArray");
             TestInfixExpression(indexExp.Index, 1, "+", 1);
+        }
+
+        [Test]
+        public void TestParsingHashLiteralStringKeys()
+        {
+            var input = "{\"one\" : 1, \"two\": 2, \"three\":3}";
+            var program = new Parser(Lexer.Create(input)).ParseProgram();
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatement");
+            var hash = stmt.Expression as HashLiteral;
+            Assert.IsNotNull(hash, "stmt.Expression is not HashLiteral");
+            Assert.AreEqual(3, hash.Pairs.Count, $"hash.pair has wrong legnth, want 3, but got {hash.Pairs.Count}");
+            var expected = new Dictionary<string, long>()
+            {
+                {"one", 1 },
+                {"two", 2 },
+                {"three",3 },
+            };
+            foreach (KeyValuePair<Expression, Expression> pair in hash.Pairs)
+            {
+                var literal = pair.Key as StringLiteral;
+                Assert.IsNotNull(literal, "pair.Key is not StringLiteral");
+                var expectedValue = expected[literal.ToString()];
+                TestIntegerLiteral(pair.Value, expectedValue);
+            }
+        }
+
+        [Test]
+        public void TestParsingEmptyHashLiteral()
+        {
+            var input = "{}";
+            var program = new Parser(Lexer.Create(input)).ParseProgram();
+            var stmt = program.Statements[0] as ExpressionStatement;
+            Assert.IsNotNull(stmt, "program.Statements[0] is not ExpressionStatement");
+            var hash = stmt.Expression as HashLiteral;
+            Assert.IsNotNull(hash, "stmt.Expression is not HashLiteral");
+            Assert.AreEqual(0, hash.Pairs.Count, $"hash.pair has wrong legnth, want 0, but got {hash.Pairs.Count}");
         }
     }
 }

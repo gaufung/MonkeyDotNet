@@ -1,5 +1,3 @@
-using System;
-
 namespace Monkey.Object
 {
     public abstract class Object 

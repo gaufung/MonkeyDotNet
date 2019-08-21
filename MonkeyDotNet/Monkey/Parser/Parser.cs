@@ -50,6 +50,7 @@
             this.RegisterPrefix(TokenType.FUNCTION, this.ParseFunctionLiteral);
             this.RegisterPrefix(TokenType.STRING, this.ParseStringLiteral);
             this.RegisterPrefix(TokenType.LBRACKET, this.ParseArrayLiteral);
+            this.RegisterPrefix(TokenType.LBRACE, this.ParseHashLiteral);
             this.RegisterInfix(TokenType.PLUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.MINUS, this.ParseInfixExpression);
             this.RegisterInfix(TokenType.SLASH, this.ParseInfixExpression);
@@ -210,7 +211,7 @@
         #endregion
 
         #region parserReturnStatement
-        public ReturnStatement ParseReturnStatement()
+        private ReturnStatement ParseReturnStatement()
         {
             var stmt = new ReturnStatement(this._curToken);
             this.NextToken();
@@ -504,6 +505,36 @@
                 throw new ParserException($"want to {TokenType.RBRACKET} got {this._peekToken}");
             }
             return exp;
+        }
+        #endregion
+
+
+        #region parse hash literal
+        private Ast.Expression ParseHashLiteral()
+        {
+            var hash = new HashLiteral { Token = this._curToken };
+            hash.Pairs = new Dictionary<Expression, Expression>();
+            while (!this.PeekTokenIs(TokenType.RBRACE))
+            {
+                this.NextToken();
+                var key = this.ParseExpression(Precedence.LOWEST);
+                if (!this.ExpectPeek(TokenType.COLON))
+                {
+                    throw new ParserException($"want {TokenType.COLON} but got {this._peekToken}");
+                }
+                this.NextToken();
+                var value = this.ParseExpression(Precedence.LOWEST);
+                hash.Pairs[key] = value;
+                if(!this.PeekTokenIs(TokenType.RBRACE) && !this.ExpectPeek(TokenType.COMMA))
+                {
+                    throw new ParserException($"want {TokenType.RBRACE} or {TokenType.COMMA}  but got {this._peekToken}");
+                }
+            }
+            if(!this.ExpectPeek(TokenType.RBRACE))
+            {
+                throw new ParserException($"want {TokenType.RBRACE} but got {this._peekToken}");
+            }
+            return hash;
         }
         #endregion
     }

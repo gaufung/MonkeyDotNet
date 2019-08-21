@@ -7,6 +7,7 @@ namespace MonkeyTest.Evaluator
     using Monkey.Object;
     using Monkey.Parser;
     using System.Globalization;
+    using NUnit.Framework.Interfaces;
 
     [TestFixture]
     public class TestEvaluator
@@ -393,6 +394,73 @@ namespace MonkeyTest.Evaluator
                     var error = evaluated as Error;
                     Assert.IsNotNull(error, "evaluated is not Error");
                     Assert.AreEqual((string)tt.Expected, error.Message, $"Error message error, want {tt.Expected} got {error.Message}");
+                }
+            }
+        }
+        #endregion
+
+        #region Test Array
+        [Test]
+        public void TestEvaluateArray()
+        {
+            var input = "[1, 2*2, 3+3]";
+            var evaluted = TestEval(input);
+            var result = evaluted as Array;
+            Assert.IsNotNull(result, "evaluted is not Array");
+            Assert.AreEqual(3, result.Elements.Count, $"result.Elements.Count is not 3, but got {result.Elements.Count}");
+            TestIntegerObject(result.Elements[0], 1);
+            TestIntegerObject(result.Elements[1], 4);
+            TestIntegerObject(result.Elements[2], 6);
+        }
+        #endregion
+
+        #region Test Index operator
+
+        class ArrayIndexTestCase
+        {
+            public string Input { get; set; }
+
+            public object Expected { get; set; }
+
+            public ArrayIndexTestCase(string input, object expected)
+            {
+                Input = input;
+                Expected = expected;
+            }
+        }
+
+        private void TestNullObject(Object obj)
+        {
+            Assert.AreSame(Evaluator.NULL, obj);
+        }
+
+        [Test]
+        public void TestArrayIndexExpression()
+        {
+            var tests = new ArrayIndexTestCase[]
+            {
+                new ArrayIndexTestCase("[1, 2, 3][0]", 1L),
+                new ArrayIndexTestCase("[1, 2, 3][1]", 2L),
+                new ArrayIndexTestCase("[1, 2, 3][2]", 3L),
+                new ArrayIndexTestCase("let i=0; [1][i]", 1L),
+                new ArrayIndexTestCase("[1, 2, 3][1+1]", 3L),
+                new ArrayIndexTestCase("let myArray =[1, 2, 3]; myArray[2];", 3L),
+                new ArrayIndexTestCase("let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2]", 6L),
+                new ArrayIndexTestCase("let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]", 2L),
+                new ArrayIndexTestCase("[1, 2, 3][3]", null),
+                new ArrayIndexTestCase("[1, 2, 3][-1]", null),
+            };
+
+            foreach (var tt in tests)
+            {
+                var evaluated = TestEval(tt.Input);
+                if(tt.Expected!=null)
+                {
+                    TestIntegerObject(evaluated, (long)tt.Expected);
+                }
+                else
+                {
+                    TestNullObject(evaluated);
                 }
             }
         }
