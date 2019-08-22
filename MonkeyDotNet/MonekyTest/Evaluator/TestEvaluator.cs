@@ -8,6 +8,8 @@ namespace MonkeyTest.Evaluator
     using Monkey.Parser;
     using System.Globalization;
     using NUnit.Framework.Interfaces;
+    using System.Collections.Generic;
+    using NUnit.Framework.Internal;
 
     [TestFixture]
     public class TestEvaluator
@@ -463,6 +465,80 @@ namespace MonkeyTest.Evaluator
                     TestNullObject(evaluated);
                 }
             }
+        }
+        #endregion
+
+        #region Test Hash Literal
+        [Test]
+        public void TEstHashLiterals()
+        {
+            var input = "let two = \"two\"; { \"one\": 10 -9, two: 1+1, \"thr\" + \"ee\": 6 / 2, 4 : 4, true: 5, false:6 }";
+            var evaluted = TestEval(input);
+            var result = evaluted as Hash;
+            Assert.IsNotNull(result, "evaluted is not Hash");
+            var expected = new Dictionary<HashKey, long>()
+            {
+                {new Strings{Value="one"}.HashKey(), 1},
+                {new Strings{Value="two"}.HashKey(), 2},
+                {new Strings{Value="three"}.HashKey(), 3},
+                {new Integer{Value=4}.HashKey(), 4},
+                {Evaluator.TRUE.HashKey(), 5 },
+                {Evaluator.FALSE.HashKey(), 6 },
+            };
+            Assert.AreEqual(expected.Count, result.Pairs.Count, $"Hash has wrong number of pairs, want {expected.Count}, got {result.Pairs.Count}");
+
+            foreach (KeyValuePair<HashKey, long> pair in expected)
+            {
+                Assert.IsTrue(result.Pairs.ContainsKey(pair.Key));
+                TestIntegerObject(result.Pairs[pair.Key].Value, pair.Value);
+            }
+        }
+        #endregion
+
+
+        #region Test Hash index
+
+        class HashIndexTestCase
+        {
+            public string Input { get; set; }
+
+            public object Expected { get; set; }
+
+            public HashIndexTestCase(string input, object expected)
+            {
+                Input = input;
+                Expected = expected;
+            }
+        }
+
+
+        [Test]
+        public void TestHashIndexExpression()
+        {
+            var tests = new[]
+            {
+                new HashIndexTestCase("{\"foo\" : 5}[\"foo\"]", 5L),
+                new HashIndexTestCase("{\"foo\" : 5}[\"bar\"]", null),
+                new HashIndexTestCase("let key = \"foo\"; {\"foo\" : 5}[key]", 5L),
+                new HashIndexTestCase("{}[\"foo\"]", null),
+                new HashIndexTestCase("{5 : 5}[5]", 5L),
+                new HashIndexTestCase("{true : 5}[true]", 5L),
+                new HashIndexTestCase("{false : 5}[false]", 5L),
+            };
+
+            foreach (var tt in tests)
+            {
+                var evaluted = TestEval(tt.Input);
+                if(tt.Expected!=null)
+                {
+                    TestIntegerObject(evaluted, (long)tt.Expected);
+                }
+                else
+                {
+                    TestNullObject(evaluted);
+                }
+            }
+
         }
         #endregion
     }

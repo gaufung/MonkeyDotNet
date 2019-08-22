@@ -1,5 +1,3 @@
-using System;
-
 namespace Monkey.Object
 {
     public enum ObjectType
@@ -13,6 +11,7 @@ namespace Monkey.Object
         STRING_OBJ,
         BUILTIN_OBJ,
         ARRAY_OBJ,
+        HASH_OBJ,
     }
     
 }

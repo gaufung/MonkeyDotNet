@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Monkey.Object
+﻿namespace Monkey.Object
 {
 
-    public class Strings : Object
+    public class Strings : Object, IHash
     {
         public string Value { get; set; }
 
+        public HashKey HashKey()
+        {
+            return new HashKey { Value = this.Value.GetHashCode(), Type = this.Type() };
+        }
 
         public override string Inspect()
         {

@@ -1,5 +1,6 @@
 ﻿using Monkey.Ast;
 using Monkey.Object;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -209,6 +210,10 @@ namespace Monkey.Evaluator
                     return index;
                 }
                 return EvalIndexExpression(left, index);
+            }
+            if(node is HashLiteral)
+            {
+                return EvalHashLiteral(node as HashLiteral, env);
             }
             return null;
         }
@@ -489,6 +494,10 @@ namespace Monkey.Evaluator
             {
                 return EvalArrayIndexExpression(left, index);
             }
+            if(left.Type() == ObjectType.HASH_OBJ)
+            {
+                return EvalhashIndexExpression(left, index);
+            }
             return new Error() { Message = $"index operator not support: {left.Type()}" };
         }
 
@@ -502,6 +511,47 @@ namespace Monkey.Evaluator
                 return NULL;
             }
             return arrayObject.Elements[(int)idx];
+        }
+
+        private static Object.Object EvalHashLiteral(HashLiteral node, Object.Environment env)
+        {
+            var pairs = new Dictionary<HashKey, HashPair>();
+            foreach (KeyValuePair<Expression, Expression> pair in node.Pairs)
+            {
+                Object.Object key = Eval(pair.Key, env);
+                if(IsError(key))
+                {
+                    return key;
+                }
+                var hashKey = key as IHash;
+                if(hashKey == null)
+                {
+                    return new Error { Message = $"unusable as hash key: {key.Type()}" };
+                }
+                var value = Eval(pair.Value, env);
+                if(IsError(value))
+                {
+                    return value;
+                }
+                var hashed = hashKey.HashKey();
+                pairs.Add(hashed, new HashPair { Key = key, Value = value });
+            }
+            return new Hash { Pairs = pairs };
+        }
+
+        private static Object.Object EvalhashIndexExpression(Object.Object hash, Object.Object index)
+        {
+            var hashObject = hash as Object.Hash;
+            var key = index as Object.IHash;
+            if(key==null)
+            {
+                return new Error { Message = $"unusable as hash key: {index.Type()}" };
+            }
+            if(hashObject.Pairs.ContainsKey(key.HashKey()))
+            {
+                return hashObject.Pairs[key.HashKey()].Value;
+            }
+            return NULL;
         }
     }
 }
