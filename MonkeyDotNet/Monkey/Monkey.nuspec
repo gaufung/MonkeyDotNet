@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Monkey</id>
+    <version>0.1.0</version>
+    <title>Monkey Interpreter</title>
+    <authors>gaufung</authors>
+    <owners>gaufung</owners>
+    <licenseUrl>https://github.com/gaufung/MonkeyDotNet/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/gaufung/MonkeyDotNet</projectUrl>
+    <iconUrl>http://gaufung.com</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A interpreter library in dotnet core.</description>
+    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>Tag1 Tag2</tags>
+  </metadata>
+</package>
