@@ -21,7 +21,7 @@ jobs:
   build:
     needs: test
     name: Build Project
-    runs-on: ubuntun-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core
@@ -34,7 +34,7 @@ jobs:
   publish:
     needs: [test, build]
     name: Publish Project to Nuget
-    runs-on: ubuntun-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core
