@@ -1,5 +1,9 @@
 name: Release
-on: [release]
+
+on:
+  push:
+    branches:
+    - release/*
 
 jobs:
   test:
