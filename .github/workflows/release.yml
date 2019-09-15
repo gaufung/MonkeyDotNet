@@ -1,6 +1,6 @@
 name: Release
 
-on: [release]
+on: [create]
 
 jobs:
   test:
