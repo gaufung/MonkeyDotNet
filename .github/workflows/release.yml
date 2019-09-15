@@ -1,9 +1,6 @@
 name: Release
 
-on:
-  push:
-    branches:
-    - release/*
+on: [release]
 
 jobs:
   test:
@@ -42,6 +39,7 @@ jobs:
       with:
         dotnet-version: '2.2.103'
     - name: Publish
-      run: dotnet nuget push MonkeyDotNet/Monkey/Monkey.nuspec -k ${APPKEY} -s https://www.nuget.org/api/v2/package
+      run: |
+        dotnet nuget push MonkeyDotNet/Monkey/Monkey.nuspec -k ${APPKEY} -s https://www.nuget.org/api/v2/package
       env:
         APPKEY: ${{ secrets.APPKEY }}

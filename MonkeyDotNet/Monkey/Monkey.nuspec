@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Monkey</id>
-    <version>0.1.1</version>
+    <version>$version$</version>
     <title>Monkey Interpreter</title>
     <authors>gaufung</authors>
     <owners>gaufung</owners>
@@ -12,7 +12,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A interpreter library in dotnet core.</description>
     <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
-    <copyright>Copyright 2019</copyright>
-    <tags>Beta</tags>
+    <copyright>Copyright 2019 by gaufung.com</copyright>
+    <tags>A interpreter library</tags>
   </metadata>
 </package>
